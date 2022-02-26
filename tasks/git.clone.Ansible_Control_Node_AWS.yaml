@@ -7,8 +7,8 @@
 
   - name: Clone a GitHub repo with separate git directory
     ansible.builtin.git:
-      repo: https://github.com/1homas/AWS_Ansible_Control_Node.git
-      dest: AWS_Ansible_Control_Node     # local folder
+      repo: https://github.com/1homas/Ansible_Control_Node_AWS.git
+      dest: Ansible_Control_Node_AWS
 
 
 ...

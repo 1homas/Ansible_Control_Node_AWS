@@ -1,6 +1,6 @@
 # Ansible AWS EC2 Instance Playbook
 
-Deploy an AWS EC2 instance of a Linux VM.  You may complete everything below within the [AWS Free Tier](https://aws.amazon.com/free).  If you have never deployed an AWS EC2 instance, you should first read [Deploy an EC2 Instance from the AWS Console](Deploy_EC2_Instance_from_AWS_Console.md) to understand the process and the virtual private cloud (VPC) components involved.
+Deploy an AWS EC2 instance of a Linux VM with Ansible.  You may complete everything below within the [AWS Free Tier](https://aws.amazon.com/free).  If you have never deployed an AWS EC2 instance, you should first read [Deploy an EC2 Instance from the AWS Console](https://github.com/1homas/Ansible_AWS_EC2_Instance/blob/main/Deploy_EC2_Instance_from_AWS_Console.md) to understand the process and the virtual private cloud (VPC) components involved.
 
 
 ## Quick Start
@@ -8,7 +8,7 @@ Deploy an AWS EC2 instance of a Linux VM.  You may complete everything below wit
 1. Clone this repository:  
 
     ```bash
-    git clone https://github.com/1homas/_____repository_name_____
+    git clone https://github.com/1homas/Ansible_Control_Node_AWS
     ```
 
 1. Create your Python environment and install Ansible:  
@@ -31,6 +31,12 @@ Deploy an AWS EC2 instance of a Linux VM.  You may complete everything below wit
     export AWS_SECRET_KEY='wJalrXUtnFEMI/K7MDENG/bPxRfi/EXAMPLE+KEY'
     ```
 
+    or you may source these variables from a file:
+
+    ```bash
+    source ~/.env/aws.sh
+    ```
+
 1. Run the Ansible playbook:  
 
     ```bash
@@ -42,15 +48,16 @@ Deploy an AWS EC2 instance of a Linux VM.  You may complete everything below wit
     > ⚠ Replace the `{hostname}` with the dynamically assigned public IP address!
 
     ```bash
-    ssh -i ./AWS_EC2_Instance_Test.private_key.pem ec2-user@{hostname}
+    ssh -i ~/.ssh/ansible_control_node.pem ubuntu@{hostname}
     ```
-
 
 1. Run commands:
     ```bash
+    ansible -m shell -a "ls" all
     ansible -m shell -a "ansible --version" all
     ansible -m shell -a "apt list --upgradable" all
     ```
+
 1. When you're done, you may terminate and remove the instances:
 
     ```bash
