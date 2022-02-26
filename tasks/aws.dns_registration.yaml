@@ -1,0 +1,34 @@
+---
+#
+# Register DNS entries for Nodes
+#
+
+  #
+  # Advertise the same internal IP for public and private DNS
+  #
+  - name: Add public DNS entry for the VM
+    community.aws.route53:
+      state: present
+      zone: "{{ domain_name }}"
+      record: "{{ item.name }}.{{ domain_name }}"
+      overwrite: yes
+      private_zone: no
+      type: A
+      ttl: 7200
+      value: "{{ item.public_ip }}"
+      wait: no
+
+  - name: Add private DNS entry for the VM
+    community.aws.route53:
+      state: present
+      zone: "{{ domain_name }}"
+      record: "{{ item.name }}.{{ domain_name }}"
+      overwrite: yes
+      private_zone: yes
+      type: A
+      ttl: 7200
+      value: "{{ item.private_ip }}"
+      wait: no
+
+
+...

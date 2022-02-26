@@ -1,0 +1,17 @@
+---
+# - name: Update and Install Software on Node(s)
+#   hosts: all          # use with the *aws_ec2.yaml inventory plugin
+#   gather_facts: yes   # required for `ansible_date_time`
+#   tasks:
+
+
+  - name: Show Ping and SSH Convenience Commands Instance
+    ansible.builtin.debug:
+      msg:
+      - "ping {{ inventory_hostname }}"
+      # - "ping {{ public_dns_name }}"      
+      # - "ssh -i {{ ssh_keypair_directory}}/{{ ssh_keypair_name }}.pem {{ ssh_user }}@{{ public_ip_address }}"
+      - "ssh -i {{ ssh_keypair_directory}}/{{ ssh_keypair_name }}.pem {{ ssh_user }}@{{ inventory_hostname }}"
+
+
+...

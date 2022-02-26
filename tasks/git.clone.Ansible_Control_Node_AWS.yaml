@@ -1,0 +1,14 @@
+---
+#
+# For more options and examples, see
+# https://docs.ansible.com/ansible/latest/collections/ansible/builtin/git_module.html
+#
+
+
+  - name: Clone a GitHub repo with separate git directory
+    ansible.builtin.git:
+      repo: https://github.com/1homas/AWS_Ansible_Control_Node.git
+      dest: AWS_Ansible_Control_Node     # local folder
+
+
+...

@@ -1,0 +1,65 @@
+---
+#
+# Run with `ansible-playbook ansible_installation.yaml`
+# See https://docs.ansible.com/ansible/latest/collections/ansible/builtin/apt_module.html
+#
+
+
+  #
+  # For more apt package installation options (versions, requirements, etc.), see
+  # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/pip_module.html
+  #
+  - name: Install Required Software Packages
+    become: yes
+    ansible.builtin.apt:
+      state: present     # absent | build-dep | latest | present | fixed
+      pkg:
+      - python
+      - python3-apt     # required for ansible.builtin.apt_repository
+      - python3-pip
+      - git
+      update_cache: yes
+      autoremove: yes
+      autoclean: yes
+      cache_valid_time: 86400   # 1 day
+
+
+  #
+  # ⓘ Requires package python3-apt
+  #
+  - name: Add ppa:ansible/ansible repository into sources list for latest Ansible
+    become: yes
+    ansible.builtin.apt_repository:
+      install_python_apt: yes
+      repo: ppa:ansible/ansible
+      state: present
+
+
+  #
+  # ⓘ Requires ppa:ansible/ansible repository
+  #
+  - name: Install Ansible
+    become: yes
+    ansible.builtin.apt:
+      pkg:
+      - ansible
+
+
+  - name: Install Python Packages
+    become: yes
+    ansible.builtin.pip:
+      name:
+      # Development Packages
+      - pipenv
+
+      # Ansible + AWS packages
+      - boto
+      - boto3
+      - botocore
+
+      # Cisco ISE REST APIs + Ansible
+      - ciscoisesdk
+      - jmespath
+      
+
+...

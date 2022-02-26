@@ -1,0 +1,88 @@
+---
+#------------------------------------------------------------------------------
+# Main YAML Playbook to create an Ansible Control Node in AWS
+#------------------------------------------------------------------------------
+
+#
+# Create the AWS VPC and Linux Instance 
+#
+- name: Create an Ansible Control Node in AWS
+  hosts: localhost
+  gather_facts: yes   # required for `ansible_date_time`
+  vars_files:
+    vars/main.yaml
+  tasks:
+
+
+  - name: Create VPC
+    ansible.builtin.include_tasks: tasks/aws.vpc.yaml
+
+  - name: Create SSH KeyPair
+    ansible.builtin.include_tasks: tasks/aws.ssh_key_pair.yaml
+
+  - name: Create Security Group
+    ansible.builtin.include_tasks: tasks/aws.sg.ping_ssh.yml
+
+  - name: Create Ansible Control Node
+    loop: "{{ nodes }}"
+    ansible.builtin.include_tasks: tasks/aws.ansible_control_node.yaml
+
+  - name: DNS for Node(s)
+    loop: "{{ nodes }}"
+    ansible.builtin.include_tasks: tasks/aws.dns_registration.yaml
+
+  - name: Create ec2_instances to login dynamically to EC2 Instance
+    loop: "{{ ec2.instances }}"
+    ansible.builtin.add_host: 
+      hostname: "{{ item.public_ip_address }}"
+      ansible_ssh_private_key_file: "{{ ssh_keypair_directory }}/{{ ssh_keypair_name }}.pem"
+      groupname: ec2_instances
+
+  - name: Wait for SSH to come up
+    loop: "{{ ec2.instances }}"
+    ansible.builtin.wait_for: 
+      host: "{{ item.public_ip_address }}" 
+      port: 22 
+      state: started
+
+
+#
+# Start a new playbook with target hosts in AWS, not the localhost
+#
+
+#
+# Install Ansible and required software onto the Linux Instance 
+#
+- name: Update and Install Software on Node(s)
+  hosts: all          # use with the *aws_ec2.yaml inventory plugin
+  gather_facts: yes   # required for `ansible_date_time`
+  vars_files:
+    vars/main.yaml
+  tasks:
+
+  # - ansible.builtin.debug: var=ansible_version
+  # - ansible.builtin.debug: var=hostvars
+  # - ansible.builtin.debug: var=inventory_hostname
+  # - ansible.builtin.debug: var=group_names
+  # - ansible.builtin.debug: var=groups
+  # - ansible.builtin.debug: var=play_hosts
+  # - ansible.builtin.debug: var=groups.ec2_instances
+  # - ansible.builtin.debug: var=groups.all
+
+  - name: Ping Node
+    ansible.builtin.include_tasks: tasks/ping.yaml
+
+  - name: SSH Node
+    ansible.builtin.include_tasks: tasks/ssh_show.yaml
+
+  - name: Update & Upgrade
+    ansible.builtin.include_tasks: tasks/apt.update_upgrade.yaml
+
+  - name: Ansible Installation
+    ansible.builtin.include_tasks: tasks/ansible_installation.yaml
+
+  - name: Clone the Ansible_Control_Node_AWS Git Repo
+    ansible.builtin.include_tasks: tasks/git.clone.Ansible_Control_Node_AWS.yaml
+
+
+...
