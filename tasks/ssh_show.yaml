@@ -10,8 +10,8 @@
       msg:
       - "ping {{ inventory_hostname }}"
       # - "ping {{ public_dns_name }}"      
-      # - "ssh -i {{ ssh_keypair_directory}}/{{ ssh_keypair_name }}.pem {{ ssh_user }}@{{ public_ip_address }}"
-      - "ssh -i {{ ssh_keypair_directory}}/{{ ssh_keypair_name }}.pem {{ ssh_user }}@{{ inventory_hostname }}"
+      # - "ssh -i {{ ssh_keypair_directory}}/{{ ssh_keypair_name }}.private.pem {{ ssh_user }}@{{ public_ip_address }}"
+      - "ssh -i {{ ssh_keypair_directory}}/{{ ssh_keypair_name }}.private.pem {{ ssh_user }}@{{ inventory_hostname }}"
 
 
 ...

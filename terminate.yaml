@@ -171,9 +171,9 @@
       name: "{{ ssh_keypair_name }}"
       state: absent
 
-  - name: Delete {{ ssh_keypair_directory }}/{{ ssh_keypair_name }}.pem
+  - name: Delete {{ ssh_keypair_directory }}/{{ ssh_keypair_name }}.private.pem
     ansible.builtin.file:
-      path: "{{ ssh_keypair_directory }}/{{ ssh_keypair_name }}.pem"
+      path: "{{ ssh_keypair_directory }}/{{ ssh_keypair_name }}.private.pem"
       state: absent
  
 
