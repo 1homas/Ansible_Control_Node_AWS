@@ -13,7 +13,7 @@
       image_id: "{{ item.image_id }}"
       instance_type: "{{ item.instance_type }}"
       key_name: "{{ item.ssh_keypair_name }}"
-      security_group: "{{ sg_ping_ssh.group_name }}"
+      security_group: "{{ item.security_group }}"
       network:
         assign_public_ip: yes
         delete_on_termination: yes
@@ -25,10 +25,7 @@
             volume_size: "{{ item.volume_size }}"
       # wait: yes
       # wait_timeout: 300     # default: 600 seconds
-      tags:
-        Name: "{{ item.name }}"
-        project: "{{ project_name }}"
-        start_date: "{{ ansible_date_time.date }}"
+      tags: "{{ item.tags }}"
     register: ec2
 
   - name: Show ec2
