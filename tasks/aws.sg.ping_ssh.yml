@@ -3,9 +3,9 @@
 # Create AWS Security Group for Ping and SSH
 #
 
-  - name: Create SG-Ping+SSH Security Group
+  - name: Create Security Group sg_ping_ssh
     amazon.aws.ec2_group:
-      name: SG-Ping+SSH
+      name: sg_ping_ssh_only
       description: Allow Ping and SSH to Linux VM
       vpc_id: "{{ vpc.vpc.id }}"
       region: "{{ aws_region }}"
@@ -24,13 +24,13 @@
         - proto: all
           cidr_ip: 0.0.0.0/0    # any
       tags:
-        Name: SG-Ping+SSH
+        Name: sg_ping_ssh_only
         project: "{{ project_name }}"
         start_date: "{{ ansible_date_time.date }}"
-    register: sg_ping_ssh
+    register: sg_ping_ssh_only
 
-  - name: Show sg_ping_ssh
-    ansible.builtin.debug: var=sg_ping_ssh
+  - name: Show sg_ping_ssh_only
+    ansible.builtin.debug: var=sg_ping_ssh_only
 
 
 ...
