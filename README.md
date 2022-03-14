@@ -1,4 +1,4 @@
-# Ansible AWS EC2 Instance Playbook
+# Ansible Control Node Instance in AWS Playbook
 
 Deploy an AWS EC2 instance of a Linux VM with Ansible.  You may complete everything below within the [AWS Free Tier](https://aws.amazon.com/free).  If you have never deployed an AWS EC2 instance, you should first read [Deploy an EC2 Instance from the AWS Console](https://github.com/1homas/Ansible_AWS_EC2_Instance/blob/main/Deploy_EC2_Instance_from_AWS_Console.md) to understand the process and the virtual private cloud (VPC) components involved.
 
@@ -58,7 +58,7 @@ Deploy an AWS EC2 instance of a Linux VM with Ansible.  You may complete everyth
     ansible -m shell -a "apt list --upgradable" all
     ```
 
-1. When you're done, you may terminate and remove the instances:
+1. When you are done, terminate the instances and delete all resources to prevent surprise AWS bills:
 
     ```bash
     ansible-playbook terminate.yaml
