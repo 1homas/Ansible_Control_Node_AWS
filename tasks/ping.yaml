@@ -2,14 +2,9 @@
 #
 # Ping Host Instances
 #
-
-
-  - name: Ping
-    ansible.builtin.ping:
-    register: result
-    until: result.failed == false
-    retries: 100
-    delay: 5
-
-
-...
+- name: Ping
+  ansible.builtin.ping:
+  register: result
+  until: result.failed == false
+  retries: 100
+  delay: 5
