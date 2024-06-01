@@ -14,10 +14,8 @@ Deploy an AWS EC2 instance of a Linux VM with Ansible.  You may complete everyth
 1. Create your Python environment and install Ansible:  
 
     ```bash
-    pip install --upgrade pip
-    pip install pipenv
-    pipenv install --python 3.9
-    pipenv install ansible boto boto3 botocore
+    pipenv install
+    pipenv install -r requirements
     pipenv shell
     ```
 
@@ -34,7 +32,7 @@ Deploy an AWS EC2 instance of a Linux VM with Ansible.  You may complete everyth
     or you may source these variables from a file:
 
     ```bash
-    source ~/.env/aws.sh
+    source ~/.secrets/aws.sh
     ```
 
 1. Run the Ansible playbook:  
@@ -52,6 +50,7 @@ Deploy an AWS EC2 instance of a Linux VM with Ansible.  You may complete everyth
     ```
 
 1. Run commands:
+
     ```bash
     ansible -m shell -a "ls" all
     ansible -m shell -a "ansible --version" all
