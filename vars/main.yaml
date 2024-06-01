@@ -12,15 +12,17 @@ ssh_key_name: "{{ project_name }}"
 ssh_key_private_file: "{{ ssh_key_directory }}/{{ ssh_key_name }}"
 ssh_user: ubuntu
 
+ansible_ssh_user: ubuntu
+ansible_ssh_private_key_file: "{{ ssh_key_private_file }}"
+
 #
 # AWS VPC
 #
 aws_region: "{{ lookup('env','AWS_REGION') | default('us-west-1') }}"
-aws_vpc_name: "{{ project_name }}"
-aws_vpc_cidr: 172.31.0.0/16
-aws_public_subnet_cidr: 172.31.1.0/24
-aws_private_subnet_cidr: 172.31.2.0/24
-aws_public_access_cidr: 0.0.0.0/0
+vpc_name: "{{ project_name }}"
+vpc_cidr_block: 172.31.0.0/16
+vpc_public_subnet: 172.31.1.0/24
+vpc_private_subnet: 172.31.2.0/24
 
 #
 # Images: https://console.aws.amazon.com/ec2/v2/home#AMICatalog:
@@ -28,7 +30,7 @@ aws_public_access_cidr: 0.0.0.0/0
 #   image_id: ami-039da1612f6f41296  # us-west-1 Ubuntu Server 20.04 LTS 64-bit (Arm)
 #   image_id: ami-054965c6cd7c6e462  # us-west-1 RHEL 8 64-bit (x86)
 #   image_id: ami-05f88a4bcb91f4ea7  # us-west-1 RHEL 8 64-bit (Arm)
-#
+#   image_id: ami-08012c0a9ee8e21c4  # (64-bit (x86)) Ubuntu Server 24.04 LTS (HVM), SSD Volume Type
 # Instance Types: https://console.aws.amazon.com/ec2/v2/home#InstanceTypes:
 #
 
@@ -38,7 +40,7 @@ nodes:
     # image_id: "{{ ubuntu_images['aws'][region]['23.04'] }}"
     instance_type: t2.micro # 1 vCPU | x86_64 | 1GB RAM
     security_group: sg_ping_ssh_only
-    ssh_user: ubuntu
+    # ssh_user: ubuntu
     # ssh_user: ec2-user          # use 'ec2-user' for Amazon Linux AMIs
     ssh_key_name: "{{ ssh_key_name }}"
     assign_public_ip: yes

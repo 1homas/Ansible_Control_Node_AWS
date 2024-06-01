@@ -2,9 +2,9 @@
 - name: Create VPC
   amazon.aws.ec2_vpc_net:
     state: present
-    name: "{{ aws_vpc_name }}"
+    name: "{{ vpc_name }}"
     region: "{{ aws_region }}"
-    cidr_block: "{{ aws_vpc_cidr }}"
+    cidr_block: "{{ vpc_cidr_block }}"
     tags:
       Name: "vpc_{{ project_name }}"
       project: "{{ project_name }}"
@@ -25,7 +25,7 @@
   amazon.aws.ec2_vpc_subnet:
     state: present
     vpc_id: "{{ vpc.vpc.id }}"
-    cidr: "{{ aws_public_subnet_cidr }}"
+    cidr: "{{ vpc_public_subnet }}"
     region: "{{ aws_region }}"
     map_public: yes # assigned public IP address by default
     tags:
@@ -38,7 +38,7 @@
   amazon.aws.ec2_vpc_subnet:
     state: present
     vpc_id: "{{ vpc.vpc.id }}"
-    cidr: "{{ aws_private_subnet_cidr }}"
+    cidr: "{{ vpc_private_subnet }}"
     region: "{{ aws_region }}"
     tags:
       Name: Private_Subnet
