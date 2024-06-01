@@ -4,85 +4,165 @@
 #------------------------------------------------------------------------------
 
 #
-# Create the AWS VPC and Linux Instance 
+# Create the AWS VPC and Linux Instance
 #
 - name: Create an Ansible Control Node in AWS
   hosts: localhost
-  gather_facts: yes   # required for `ansible_date_time`
-  vars_files:
-    vars/main.yaml
+  gather_facts: no
+  vars_files: vars/main.yaml
   tasks:
+    - name: Create VPC
+      ansible.builtin.include_tasks: tasks/aws.vpc.yaml
 
+    - name: Create SSH KeyPair
+      ansible.builtin.include_tasks: tasks/aws.ssh_key_pair.yaml
 
-  - name: Create VPC
-    ansible.builtin.include_tasks: tasks/aws.vpc.yaml
+    - name: Create Security Group sg_ping_ssh
+      amazon.aws.ec2_group:
+        name: sg_ping_ssh_only
+        description: Allow Ping and SSH to Linux VM
+        vpc_id: "{{ vpc.vpc.id }}"
+        region: "{{ aws_region }}"
+        rules:
+          - proto: icmp
+            from_port: -1
+            to_port: -1
+            cidr_ip: 0.0.0.0/0 # any
+            rule_desc: Allow ICMP Ping
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0 # any
+            rule_desc: Allow SSH
+        rules_egress:
+          - proto: all
+            cidr_ip: 0.0.0.0/0 # any
+        tags:
+          Name: sg_ping_ssh_only
+          project: "{{ project_name }}"
+          started: "{{ '%Y-%m-%dT%H:%M:%S-%z' | strftime }}"
+      register: sg_ping_ssh_only
 
-  - name: Create SSH KeyPair
-    ansible.builtin.include_tasks: tasks/aws.ssh_key_pair.yaml
+    - name: Create Nodes
+      community.aws.ec2_instance:
+        state: started # 💡 wait for started to get public IP address!
+        name: "{{ item.name }}"
+        region: "{{ aws_region }}"
+        vpc_subnet_id: "{{ subnet_private.subnet.id }}"
+        image_id: "{{ item.image_id }}"
+        instance_type: "{{ item.instance_type }}"
+        key_name: "{{ item.ssh_key_name }}"
+        security_group: "{{ item.security_group }}"
+        network:
+          assign_public_ip: yes
+          delete_on_termination: yes
+          private_ip_address: "{{ item.private_ip }}"
+        volumes:
+          - device_name: /dev/xvda
+            ebs:
+              delete_on_termination: true
+              volume_size: "{{ item.volume_size }}"
+        # wait: yes
+        # wait_timeout: 300     # default: 600 seconds
+        tags: "{{ item.tags }}"
+      register: ec2
 
-  - name: Create Security Group
-    ansible.builtin.include_tasks: tasks/aws.sg.ping_ssh.yml
+    - name: Add Public DNS Entry for the VM
+      loop: "{{ ec2.instances }}"
+      community.aws.route53:
+        state: present
+        zone: "{{ domain_name }}"
+        record: "{{ item.tags.Name }}.{{ domain_name }}"
+        overwrite: yes
+        private_zone: no
+        type: A
+        ttl: 7200
+        value: "{{ item.public_ip_address }}"
+        wait: no
 
-  - name: Create Ansible Control Node
-    loop: "{{ nodes }}"
-    ansible.builtin.include_tasks: tasks/aws.ansible_control_node.yaml
+    - name: Add Private DNS Entry for the VM
+      loop: "{{ ec2.instances }}"
+      community.aws.route53:
+        state: present
+        zone: "{{ domain_name }}"
+        record: "{{ item.tags.Name }}-private.{{ domain_name }}"
+        overwrite: yes
+        private_zone: yes
+        type: A
+        ttl: 7200
+        value: "{{ item.private_ip_address }}"
+        wait: no
 
-  - name: DNS for Node(s)
-    loop: "{{ nodes }}"
-    ansible.builtin.include_tasks: tasks/aws.dns_registration.yaml
+    - name: Wait for SSH to come up
+      loop: "{{ ec2.instances }}"
+      ansible.builtin.wait_for:
+        host: "{{ item.public_ip_address }}"
+        port: 22
+        state: started
 
-  - name: Create ec2_instances to login dynamically to EC2 Instance
-    loop: "{{ ec2.instances }}"
-    ansible.builtin.add_host: 
-      hostname: "{{ item.public_ip_address }}"
-      ansible_ssh_private_key_file: "{{ ssh_keypair_directory }}/{{ ssh_keypair_name }}.private.pem"
-      groupname: ec2_instances
-
-  - name: Wait for SSH to come up
-    loop: "{{ ec2.instances }}"
-    ansible.builtin.wait_for: 
-      host: "{{ item.public_ip_address }}" 
-      port: 22 
-      state: started
-
+    - name: Refresh inventory to ensure new instances exist in inventory
+      ansible.builtin.meta: refresh_inventory
 
 #
 # Start a new playbook with target hosts in AWS, not the localhost
+# Install Ansible and required software onto the Linux Instance
 #
-
-#
-# Install Ansible and required software onto the Linux Instance 
-#
-- name: Update and Install Software on Node(s)
-  hosts: all          # use with the *aws_ec2.yaml inventory plugin
-  gather_facts: yes   # required for `ansible_date_time`
-  vars_files:
-    vars/main.yaml
+- name: Update and Install Software on VMs
+  hosts: ansible # use with the inventory/aws_ec2.yaml inventory plugin
+  gather_facts: no
+  vars_files: vars/main.yaml
   tasks:
+    # - ansible.builtin.debug: var=ansible_version
+    # - ansible.builtin.debug: var=hostvars
+    # - ansible.builtin.debug: var=inventory_hostname
+    # - ansible.builtin.debug: var=group_names
+    # - ansible.builtin.debug: var=groups
+    # - ansible.builtin.debug: var=play_hosts
+    # - ansible.builtin.debug: var=groups.ec2_instances
+    # - ansible.builtin.debug: var=groups.all
 
-  # - ansible.builtin.debug: var=ansible_version
-  # - ansible.builtin.debug: var=hostvars
-  # - ansible.builtin.debug: var=inventory_hostname
-  # - ansible.builtin.debug: var=group_names
-  # - ansible.builtin.debug: var=groups
-  # - ansible.builtin.debug: var=play_hosts
-  # - ansible.builtin.debug: var=groups.ec2_instances
-  # - ansible.builtin.debug: var=groups.all
+    # requires ansible_ssh_user & ansible_ssh_private_key_file
+    - name: Ping
+      ansible.builtin.ping:
 
-  - name: Ping Node
-    ansible.builtin.include_tasks: tasks/ping.yaml
+    - name: Show Ping and SSH Convenience Commands
+      ansible.builtin.debug:
+        msg:
+          - "ping {{ ansible_host }}"
+          - "ssh -i {{ ssh_key_private_file }} {{ ansible_ssh_user }}@{{ ansible_host }}"
 
-  - name: SSH Node
-    ansible.builtin.include_tasks: tasks/ssh_show.yaml
+    # Equivalent of `sudo apt update && sudo apt -Y upgrade`
+    - name: apt Update and Upgrade Packages
+      become: yes
+      ansible.builtin.apt:
+        update_cache: yes
+        upgrade: yes
+        cache_valid_time: 86400   # 1 day
 
-  - name: Update & Upgrade
-    ansible.builtin.include_tasks: tasks/apt.update_upgrade.yaml
+    - name: Install Required Software Packages
+      become: yes
+      ansible.builtin.apt:
+        state: present # absent | build-dep | latest | present | fixed
+        pkg:
+          - python3
+          - python3-apt # required for ansible.builtin.apt_repository
+          - python3-pip
+          - git
+        update_cache: yes
+        autoremove: yes
+        autoclean: yes
+        cache_valid_time: 86400 # 1 day
 
-  - name: Ansible Installation
-    ansible.builtin.include_tasks: tasks/ansible_installation.yaml
-
-  - name: Clone the Ansible_Control_Node_AWS Git Repo
-    ansible.builtin.include_tasks: tasks/git.clone.Ansible_Control_Node_AWS.yaml
-
-
-...
+    - name: Install Python Packages for Ansible
+      become: yes
+      ansible.builtin.pip:
+        name:
+          # Ansible + AWS packages
+          - ansible
+          - boto
+          - boto3
+          - botocore
+          # Cisco ISE REST APIs + Ansible
+          - ciscoisesdk
+          - jmespath
+        extra_args: --break-system-packages # ignore externally managed packages
